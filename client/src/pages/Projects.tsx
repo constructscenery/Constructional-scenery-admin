@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, BookOpen } from "lucide-react";
 import { projectsApi } from "@/api/projects";
 import { Project } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
@@ -69,7 +70,23 @@ export function Projects() {
   const { data, isLoading } = useQuery({ queryKey: ["projects"], queryFn: () => projectsApi.list().then((r) => r.data.data) });
   const inv = () => qc.invalidateQueries({ queryKey: ["projects"] });
 
-  const createMut = useMutation({ mutationFn: projectsApi.create, onSuccess: () => { inv(); setAddOpen(false); toast.success("Project added"); }, onError: (e) => toast.error(getErrorMessage(e)) });
+  const createMut = useMutation({
+    mutationFn: projectsApi.create,
+    onSuccess: (res) => {
+      inv();
+      qc.invalidateQueries({ queryKey: ["worlds"] });
+      setAddOpen(false);
+      const slug = res.data.data?.slug;
+      if (slug) {
+        toast.success("Project created — world case study page drafted", {
+          description: `Edit the full case study under Worlds / ${slug}`,
+        });
+      } else {
+        toast.success("Project added");
+      }
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
   const updateMut = useMutation({ mutationFn: ({ id, data }: { id: number; data: Partial<Project> }) => projectsApi.update(id, data), onSuccess: () => { inv(); setEditItem(null); toast.success("Project updated"); }, onError: (e) => toast.error(getErrorMessage(e)) });
   const deleteMut = useMutation({ mutationFn: projectsApi.delete, onSuccess: () => { inv(); setDeleteId(null); toast.success("Project deleted"); }, onError: (e) => toast.error(getErrorMessage(e)) });
 
@@ -89,6 +106,13 @@ export function Projects() {
                 <TableCell>{p.slug ? <code className="text-xs bg-muted px-1 rounded">{p.slug}</code> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
                 <TableCell><Badge variant={p.visible ? "default" : "secondary"}>{p.visible ? "Visible" : "Hidden"}</Badge></TableCell>
                 <TableCell className="text-right">
+                  {p.slug && (
+                    <Link to={`/worlds/${p.slug}/edit`}>
+                      <Button variant="ghost" size="icon" title="Edit case study">
+                        <BookOpen className="h-4 w-4 text-primary" />
+                      </Button>
+                    </Link>
+                  )}
                   <Button variant="ghost" size="icon" onClick={() => setEditItem(p)}><Pencil className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => setDeleteId(p.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                 </TableCell>
