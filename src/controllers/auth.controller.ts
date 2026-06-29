@@ -20,9 +20,9 @@ export async function login(req: Request, res: Response, next: NextFunction): Pr
       return;
     }
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
-      expiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
-    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const jwtOpts = { expiresIn: process.env.JWT_EXPIRES_IN ?? "7d" } as any;
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, jwtOpts);
 
     res.json({
       success: true,

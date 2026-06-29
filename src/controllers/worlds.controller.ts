@@ -24,7 +24,7 @@ export async function getWorlds(_req: Request, res: Response, next: NextFunction
 export async function getWorldBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const world = await prisma.world.findUnique({
-      where: { slug: req.params.slug },
+      where: { slug: String(req.params.slug) },
       include: worldInclude,
     });
 
@@ -65,7 +65,7 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
   try {
     const { gallery, facts, credits, process, results, ...rest } = req.body;
 
-    const existing = await prisma.world.findUnique({ where: { slug: req.params.slug } });
+    const existing = await prisma.world.findUnique({ where: { slug: String(req.params.slug) } });
     if (!existing) {
       res.status(404).json({ success: false, data: null, message: "World not found" });
       return;
@@ -103,7 +103,7 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
     });
 
     const updated = await prisma.world.findUnique({
-      where: { slug: req.params.slug },
+      where: { slug: String(req.params.slug) },
       include: worldInclude,
     });
 
@@ -115,13 +115,13 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
 
 export async function deleteWorld(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const existing = await prisma.world.findUnique({ where: { slug: req.params.slug } });
+    const existing = await prisma.world.findUnique({ where: { slug: String(req.params.slug) } });
     if (!existing) {
       res.status(404).json({ success: false, data: null, message: "World not found" });
       return;
     }
 
-    await prisma.world.delete({ where: { slug: req.params.slug } });
+    await prisma.world.delete({ where: { slug: String(req.params.slug) } });
     res.json({ success: true, data: null, message: "World deleted" });
   } catch (err) {
     next(err);

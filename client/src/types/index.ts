@@ -243,6 +243,16 @@ export interface World {
   updatedAt: string;
 }
 
+// ── World write payload (sub-arrays omit DB-generated id/worldId) ────────────
+
+export type WorldInput = Omit<Partial<World>, "gallery" | "facts" | "credits" | "process" | "results"> & {
+  gallery?: Omit<WorldImage, "id" | "worldId">[];
+  facts?: Omit<WorldFact, "id" | "worldId">[];
+  credits?: Omit<WorldCredit, "id" | "worldId">[];
+  process?: Omit<WorldProcess, "id" | "worldId">[];
+  results?: Omit<WorldResult, "id" | "worldId">[];
+};
+
 // ── Upload ──────────────────────────────────────────────────────────────────
 
 export interface UploadResult {
