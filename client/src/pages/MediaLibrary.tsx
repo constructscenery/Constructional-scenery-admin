@@ -25,6 +25,7 @@ function isVideo(mimeType: string) {
 
 function MediaCard({ file, onDelete }: { file: MediaFile; onDelete: (id: number) => void }) {
   const [copied, setCopied] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const copyUrl = () => {
     navigator.clipboard.writeText(file.url);
@@ -32,25 +33,38 @@ function MediaCard({ file, onDelete }: { file: MediaFile; onDelete: (id: number)
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const video = isVideo(file.mimeType);
+
   return (
     <div className="group relative rounded-lg border bg-card overflow-hidden">
-      <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden">
-        {isVideo(file.mimeType) ? (
+      <div className="aspect-square bg-muted flex items-center justify-center overflow-hidden relative">
+        {/* Skeleton shimmer shown while loading */}
+        {!loaded && (
+          <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
+            {video
+              ? <Film className="h-8 w-8 text-muted-foreground/30" />
+              : <ImageOff className="h-8 w-8 text-muted-foreground/30" />
+            }
+          </div>
+        )}
+        {video ? (
           <video
             src={file.url}
-            className="h-full w-full object-cover"
+            className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
             muted
             preload="metadata"
+            onLoadedMetadata={() => setLoaded(true)}
           />
         ) : (
           <img
             src={file.url}
             alt={file.filename}
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            className={`h-full w-full object-cover transition-all duration-300 group-hover:scale-105 ${loaded ? "opacity-100" : "opacity-0"}`}
+            onLoad={() => setLoaded(true)}
+            onError={() => setLoaded(true)}
           />
         )}
-        {isVideo(file.mimeType) && (
+        {video && loaded && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <Film className="h-8 w-8 text-white drop-shadow-lg opacity-80" />
           </div>

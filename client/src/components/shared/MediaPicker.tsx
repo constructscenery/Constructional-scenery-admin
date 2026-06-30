@@ -17,6 +17,54 @@ interface MediaPickerProps {
   onSelect: (url: string) => void;
 }
 
+function PickerItem({ file, onSelect }: { file: MediaFile; onSelect: (url: string) => void }) {
+  const [loaded, setLoaded] = useState(false);
+  const video = file.mimeType.startsWith("video/");
+
+  return (
+    <button
+      type="button"
+      className="group relative aspect-square rounded-md overflow-hidden border-2 border-transparent hover:border-primary transition-colors focus:outline-none focus:border-primary bg-muted"
+      onClick={() => onSelect(file.url)}
+      title={file.filename}
+    >
+      {!loaded && (
+        <div className="absolute inset-0 animate-pulse bg-muted flex items-center justify-center">
+          {video
+            ? <Film className="h-5 w-5 text-muted-foreground/30" />
+            : <ImageOff className="h-5 w-5 text-muted-foreground/30" />
+          }
+        </div>
+      )}
+      {video ? (
+        <video
+          src={file.url}
+          className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+          muted
+          preload="metadata"
+          onLoadedMetadata={() => setLoaded(true)}
+        />
+      ) : (
+        <img
+          src={file.url}
+          alt={file.filename}
+          className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setLoaded(true)}
+        />
+      )}
+      {video && loaded && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Film className="h-6 w-6 text-white drop-shadow-lg opacity-80" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <Check className="h-6 w-6 text-white" />
+      </div>
+    </button>
+  );
+}
+
 function LibraryGrid({ onSelect }: { onSelect: (url: string) => void }) {
   const { data, isLoading } = useQuery({
     queryKey: ["media"],
@@ -44,32 +92,9 @@ function LibraryGrid({ onSelect }: { onSelect: (url: string) => void }) {
 
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 max-h-[400px] overflow-y-auto pr-1">
-      {data.map((file: MediaFile) => {
-        const video = file.mimeType.startsWith("video/");
-        return (
-          <button
-            key={file.id}
-            type="button"
-            className="group relative aspect-square rounded-md overflow-hidden border-2 border-transparent hover:border-primary transition-colors focus:outline-none focus:border-primary"
-            onClick={() => onSelect(file.url)}
-            title={file.filename}
-          >
-            {video ? (
-              <video src={file.url} className="h-full w-full object-cover" muted preload="metadata" />
-            ) : (
-              <img src={file.url} alt={file.filename} className="h-full w-full object-cover" />
-            )}
-            {video && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <Film className="h-6 w-6 text-white drop-shadow-lg opacity-80" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Check className="h-6 w-6 text-white" />
-            </div>
-          </button>
-        );
-      })}
+      {data.map((file: MediaFile) => (
+        <PickerItem key={file.id} file={file} onSelect={onSelect} />
+      ))}
     </div>
   );
 }
