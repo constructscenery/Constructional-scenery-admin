@@ -1,12 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { v2 as cloudinary } from "cloudinary";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomUUID } from "crypto";
+import path from "path";
+import { s3, S3_BUCKET, S3_REGION } from "../lib/s3";
 import { prisma } from "../lib/prisma";
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 export async function uploadImage(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -15,20 +12,24 @@ export async function uploadImage(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const result = await new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { folder: "construct-scenery", resource_type: "auto" },
-        (err, result) => {
-          if (err || !result) return reject(err ?? new Error("Cloudinary upload failed"));
-          resolve({ secure_url: result.secure_url, public_id: result.public_id });
-        }
-      ).end(req.file!.buffer);
-    });
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const key = `construct-scenery/${randomUUID()}${ext}`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: S3_BUCKET,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+      })
+    );
+
+    const url = `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${key}`;
 
     const media = await prisma.mediaFile.create({
       data: {
-        url: result.secure_url,
-        publicId: result.public_id,
+        url,
+        publicId: key,
         filename: req.file.originalname,
         mimeType: req.file.mimetype,
         size: req.file.size,
