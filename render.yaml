@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: construct-scenery-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/index.js
+    preDeployCommand: npx prisma migrate deploy
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: construct-scenery-db
+          property: connectionString
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dvzkh1nal
+      - key: ADMIN_EMAIL
+        value: admin@constructscenery.co.uk
+      - key: ADMIN_NAME
+        value: Admin
+      # Set these manually in the Render dashboard — do not put secrets in this file
+      - key: JWT_SECRET
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+databases:
+  - name: construct-scenery-db
+    databaseName: construct_scenery
+    user: cs_admin
+    plan: free
