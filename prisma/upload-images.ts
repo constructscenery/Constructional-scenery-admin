@@ -1,18 +1,22 @@
 import "dotenv/config";
-import { v2 as cloudinary } from "cloudinary";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { PrismaClient } from "@prisma/client";
 import * as fs from "fs";
 import * as path from "path";
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+const s3 = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
 });
+
+const S3_BUCKET = process.env.AWS_S3_BUCKET!;
+const S3_REGION = process.env.AWS_REGION!;
 
 const prisma = new PrismaClient();
 
-// Local asset path → absolute file path on this machine
 const ASSETS_DIR = path.join(__dirname, "../../scenic-builds-elevated/src/assets");
 
 const IMAGES = [
@@ -29,26 +33,34 @@ const IMAGES = [
   "hero-set.jpg",
 ];
 
+const MIME: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+};
+
 async function uploadFile(filename: string): Promise<string> {
   const filePath = path.join(ASSETS_DIR, filename);
-  const publicId = `construct-scenery/${path.basename(filename, path.extname(filename))}`;
+  const ext = path.extname(filename).toLowerCase();
+  const key = `construct-scenery/${path.basename(filename, ext)}${ext}`;
 
-  return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload(
-      filePath,
-      { public_id: publicId, overwrite: true, resource_type: "image" },
-      (err, result) => {
-        if (err || !result) return reject(err ?? new Error("Upload failed"));
-        resolve(result.secure_url);
-      }
-    );
-  });
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: S3_BUCKET,
+      Key: key,
+      Body: fs.readFileSync(filePath),
+      ContentType: MIME[ext] ?? "application/octet-stream",
+    })
+  );
+
+  return `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${key}`;
 }
 
 async function main() {
-  console.log("Uploading images to Cloudinary...\n");
+  console.log("Uploading images to S3...\n");
 
-  // Upload all images and build a map: "/assets/project-1.jpg" → "https://res.cloudinary.com/..."
   const urlMap: Record<string, string> = {};
 
   for (const filename of IMAGES) {
@@ -61,10 +73,10 @@ async function main() {
     }
 
     try {
-      const cloudUrl = await uploadFile(filename);
-      urlMap[assetKey] = cloudUrl;
+      const s3Url = await uploadFile(filename);
+      urlMap[assetKey] = s3Url;
       console.log(`  ✓ ${filename}`);
-      console.log(`    → ${cloudUrl}`);
+      console.log(`    → ${s3Url}`);
     } catch (err) {
       console.error(`  ✗ ${filename} — upload failed:`, err);
     }
@@ -129,7 +141,7 @@ async function main() {
       await prisma.aboutSection.update({ where: { id: about.id }, data: { imageUrl: newUrl } });
       console.log("  ✓ About section imageUrl updated");
     } else {
-      console.log("  – About section: imageUrl already a Cloudinary URL or not in map");
+      console.log("  – About section: imageUrl already an S3 URL or not in map");
     }
   }
 
@@ -141,7 +153,7 @@ async function main() {
       await prisma.sustainabilitySection.update({ where: { id: sust.id }, data: { imageUrl: newUrl } });
       console.log("  ✓ Sustainability section imageUrl updated");
     } else {
-      console.log("  – Sustainability section: imageUrl already a Cloudinary URL or not in map");
+      console.log("  – Sustainability section: imageUrl already an S3 URL or not in map");
     }
   }
 
@@ -153,12 +165,11 @@ async function main() {
       await prisma.heroSection.update({ where: { id: hero.id }, data: { videoPoster: newUrl } });
       console.log("  ✓ Hero section videoPoster updated");
     } else {
-      console.log("  – Hero section: videoPoster already a Cloudinary URL or not in map");
+      console.log("  – Hero section: videoPoster already an S3 URL or not in map");
     }
   }
 
-  console.log("\n✅ Done. All /assets/* paths in the database have been replaced with Cloudinary URLs.");
-  console.log("   imageResolver.ts will now pass-through for these records (Cloudinary URLs bypass the map).");
+  console.log("\n✅ Done. All /assets/* paths in the database have been replaced with S3 URLs.");
 }
 
 main()

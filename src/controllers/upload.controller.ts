@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { cloudinary } from "../lib/cloudinary";
-import { UploadApiResponse } from "cloudinary";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomUUID } from "crypto";
+import path from "path";
+import { s3, S3_BUCKET, S3_REGION } from "../lib/s3";
 
 export async function uploadImage(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -9,20 +11,23 @@ export async function uploadImage(req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
-      const stream = cloudinary.uploader.upload_stream(
-        { folder: "construct-scenery", resource_type: "image" },
-        (err, result) => {
-          if (err || !result) return reject(err ?? new Error("Upload failed"));
-          resolve(result);
-        }
-      );
-      stream.end(req.file!.buffer);
-    });
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const key = `construct-scenery/${randomUUID()}${ext}`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: S3_BUCKET,
+        Key: key,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+      })
+    );
+
+    const url = `https://${S3_BUCKET}.s3.${S3_REGION}.amazonaws.com/${key}`;
 
     res.json({
       success: true,
-      data: { url: result.secure_url, publicId: result.public_id },
+      data: { url, publicId: key },
       message: "Image uploaded successfully",
     });
   } catch (err) {

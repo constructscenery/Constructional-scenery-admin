@@ -18,8 +18,6 @@ services:
         value: 4000
       - key: JWT_EXPIRES_IN
         value: 7d
-      - key: CLOUDINARY_CLOUD_NAME
-        value: dvzkh1nal
       - key: ADMIN_EMAIL
         value: admin@constructscenery.co.uk
       - key: ADMIN_NAME
@@ -27,9 +25,13 @@ services:
       # Set these manually in the Render dashboard — do not put secrets in this file
       - key: JWT_SECRET
         sync: false
-      - key: CLOUDINARY_API_KEY
+      - key: AWS_ACCESS_KEY_ID
         sync: false
-      - key: CLOUDINARY_API_SECRET
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: AWS_S3_BUCKET
         sync: false
       - key: ADMIN_PASSWORD
         sync: false
