@@ -15,22 +15,24 @@ interface ImageUploadProps {
 }
 
 export function ImageUpload({ value, onChange, label = "Image" }: ImageUploadProps) {
-  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState<number | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
 
+  const isUploading = progress !== null;
+
   const handleFile = async (file: File) => {
-    setUploading(true);
+    setProgress(0);
     try {
-      const res = await uploadApi.uploadImage(file);
-      onChange(res.data.data.url);
+      const res = await uploadApi.uploadWithProgress(file, setProgress);
+      onChange(res.data.url);
       qc.invalidateQueries({ queryKey: ["media"] });
-      toast.success("Image uploaded");
+      toast.success("Uploaded");
     } catch {
       toast.error("Upload failed");
     } finally {
-      setUploading(false);
+      setProgress(null);
     }
   };
 
@@ -57,9 +59,9 @@ export function ImageUpload({ value, onChange, label = "Image" }: ImageUploadPro
           type="button"
           variant="outline"
           size="icon"
-          disabled={uploading}
+          disabled={isUploading}
           onClick={() => inputRef.current?.click()}
-          title="Upload new image"
+          title="Upload new file"
         >
           <Upload className="h-4 w-4" />
         </Button>
@@ -76,7 +78,24 @@ export function ImageUpload({ value, onChange, label = "Image" }: ImageUploadPro
         className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
       />
-      {value && (
+
+      {/* Upload progress */}
+      {isUploading && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>Uploading…</span>
+            <span className="tabular-nums font-medium text-foreground">{progress}%</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-150"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {value && !isUploading && (
         <img
           src={value}
           alt="Preview"
@@ -84,7 +103,6 @@ export function ImageUpload({ value, onChange, label = "Image" }: ImageUploadPro
           onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
         />
       )}
-      {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
       <MediaPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}

@@ -105,47 +105,68 @@ function UploadTab({ onSelect }: { onSelect: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
+  const [progress, setProgress] = useState<number | null>(null);
+
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
+    setProgress(0);
     try {
-      const res = await uploadApi.uploadImage(files[0]);
+      const res = await uploadApi.uploadWithProgress(files[0], setProgress);
       qc.invalidateQueries({ queryKey: ["media"] });
       toast.success("Uploaded");
-      onSelect(res.data.data.url);
+      onSelect(res.data.url);
     } catch {
       toast.error("Upload failed");
     } finally {
       setUploading(false);
+      setProgress(null);
     }
   };
 
   return (
-    <div
-      className={`rounded-xl border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-16 ${
-        dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"
-      } ${uploading ? "pointer-events-none opacity-60" : ""}`}
-      onClick={() => !uploading && inputRef.current?.click()}
-      onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
-    >
-      {uploading ? (
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      ) : (
-        <Upload className="h-8 w-8 text-muted-foreground" />
-      )}
-      <div className="text-center">
-        <p className="text-sm font-medium">{uploading ? "Uploading…" : "Drop an image here or click to upload"}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">Images & videos — up to 200 MB</p>
+    <div className="space-y-4">
+      <div
+        className={`rounded-xl border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-16 ${
+          dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"
+        } ${uploading ? "pointer-events-none opacity-60" : ""}`}
+        onClick={() => !uploading && inputRef.current?.click()}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFiles(e.dataTransfer.files); }}
+      >
+        {uploading ? (
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        ) : (
+          <Upload className="h-8 w-8 text-muted-foreground" />
+        )}
+        <div className="text-center">
+          <p className="text-sm font-medium">{uploading ? "Uploading…" : "Drop a file here or click to upload"}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Images & videos — up to 200 MB</p>
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,video/*"
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
       </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*,video/*"
-        className="hidden"
-        onChange={(e) => handleFiles(e.target.files)}
-      />
+
+      {progress !== null && (
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-xs">
+            <span className="text-muted-foreground">Uploading…</span>
+            <span className="tabular-nums font-medium">{progress}%</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-150"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -86,10 +86,12 @@ function MediaCard({ file, onDelete }: { file: MediaFile; onDelete: (id: number)
   );
 }
 
+type UploadEntry = { key: string; name: string; progress: number };
+
 export function MediaLibrary() {
   const qc = useQueryClient();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploads, setUploads] = useState<UploadEntry[]>([]);
   const [dragOver, setDragOver] = useState(false);
 
   const { data, isLoading } = useQuery({
@@ -108,17 +110,30 @@ export function MediaLibrary() {
 
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
-    setUploading(true);
+
+    const entries: UploadEntry[] = Array.from(files).map((f, i) => ({
+      key: `${Date.now()}-${i}`,
+      name: f.name,
+      progress: 0,
+    }));
+    setUploads(entries);
+
     let succeeded = 0;
-    for (const file of Array.from(files)) {
+    for (let i = 0; i < entries.length; i++) {
+      const key = entries[i].key;
       try {
-        await uploadApi.uploadImage(file);
+        await uploadApi.uploadWithProgress(files[i], (pct) => {
+          setUploads((prev) =>
+            prev.map((u) => (u.key === key ? { ...u, progress: pct } : u))
+          );
+        });
         succeeded++;
       } catch {
-        toast.error(`Failed to upload ${file.name}`);
+        toast.error(`Failed to upload ${files[i].name}`);
       }
     }
-    setUploading(false);
+
+    setUploads([]);
     if (succeeded > 0) {
       qc.invalidateQueries({ queryKey: ["media"] });
       toast.success(`${succeeded} file${succeeded > 1 ? "s" : ""} uploaded`);
@@ -131,6 +146,7 @@ export function MediaLibrary() {
     handleFiles(e.dataTransfer.files);
   };
 
+  const isUploading = uploads.length > 0;
   const total = data?.length ?? 0;
 
   return (
@@ -144,7 +160,7 @@ export function MediaLibrary() {
       <div
         className={`rounded-xl border-2 border-dashed transition-colors cursor-pointer flex flex-col items-center justify-center gap-3 py-10 ${
           dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"
-        } ${uploading ? "pointer-events-none opacity-60" : ""}`}
+        } ${isUploading ? "pointer-events-none opacity-60" : ""}`}
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
@@ -152,7 +168,7 @@ export function MediaLibrary() {
       >
         <Upload className="h-8 w-8 text-muted-foreground" />
         <div className="text-center">
-          <p className="text-sm font-medium">{uploading ? "Uploading…" : "Drop files here or click to upload"}</p>
+          <p className="text-sm font-medium">Drop files here or click to upload</p>
           <p className="text-xs text-muted-foreground mt-0.5">Images & videos — up to 200 MB each</p>
         </div>
         <input
@@ -164,6 +180,26 @@ export function MediaLibrary() {
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
+
+      {/* Per-file upload progress */}
+      {isUploading && (
+        <div className="space-y-3 rounded-xl border bg-card p-4">
+          {uploads.map((u) => (
+            <div key={u.key} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="truncate max-w-[80%] font-medium text-foreground">{u.name}</span>
+                <span className="text-muted-foreground tabular-nums">{u.progress}%</span>
+              </div>
+              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-150"
+                  style={{ width: `${u.progress}%` }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Grid */}
       {isLoading ? (
