@@ -45,4 +45,4 @@ export const worldSchema = z.object({
   visible: z.boolean().default(true),
 });
 
-export const worldUpdateSchema = worldSchema.partial().omit({ slug: true });
+export const worldUpdateSchema = worldSchema.partial();

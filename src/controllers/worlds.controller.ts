@@ -103,7 +103,7 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
     });
 
     const updated = await prisma.world.findUnique({
-      where: { slug: String(req.params.slug) },
+      where: { id: existing.id },
       include: worldInclude,
     });
 
