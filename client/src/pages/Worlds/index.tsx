@@ -14,13 +14,13 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 
 export function Worlds() {
   const qc = useQueryClient();
-  const [deleteSlug, setDeleteSlug] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["worlds"], queryFn: () => worldsApi.list().then((r) => r.data.data) });
 
   const deleteMut = useMutation({
-    mutationFn: (slug: string) => worldsApi.delete(slug),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); setDeleteSlug(null); toast.success("World deleted"); },
+    mutationFn: (id: number) => worldsApi.delete(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); setDeleteId(null); toast.success("World deleted"); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
@@ -75,7 +75,7 @@ export function Worlds() {
                   <Link to={`/worlds/${w.slug}/edit`}>
                     <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
                   </Link>
-                  <Button variant="ghost" size="icon" onClick={() => setDeleteSlug(w.slug)}>
+                  <Button variant="ghost" size="icon" onClick={() => setDeleteId(w.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
@@ -86,11 +86,11 @@ export function Worlds() {
       )}
 
       <ConfirmDialog
-        open={deleteSlug !== null}
-        onOpenChange={(o) => !o && setDeleteSlug(null)}
+        open={deleteId !== null}
+        onOpenChange={(o) => !o && setDeleteId(null)}
         title="Delete world?"
-        description={`This will permanently delete "${deleteSlug}" and all its gallery, facts, credits, process steps, and results.`}
-        onConfirm={() => deleteSlug && deleteMut.mutate(deleteSlug)}
+        description={`This will permanently delete this world and all its gallery, facts, credits, process steps, and results.`}
+        onConfirm={() => deleteId && deleteMut.mutate(deleteId)}
         loading={deleteMut.isPending}
       />
     </div>

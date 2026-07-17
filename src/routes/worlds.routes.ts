@@ -15,7 +15,7 @@ const router = Router();
 router.get("/", getWorlds);
 router.get("/:slug", getWorldBySlug);
 router.post("/", requireAuth, validate(worldSchema), createWorld);
-router.put("/:slug", requireAuth, validate(worldUpdateSchema), updateWorld);
-router.delete("/:slug", requireAuth, deleteWorld);
+router.put("/:id", requireAuth, validate(worldUpdateSchema), updateWorld);
+router.delete("/:id", requireAuth, deleteWorld);
 
 export default router;

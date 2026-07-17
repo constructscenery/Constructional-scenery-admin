@@ -86,7 +86,7 @@ export function WorldForm() {
   });
 
   const updateMut = useMutation({
-    mutationFn: (values: FormData) => worldsApi.update(slug!, { ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) }),
+    mutationFn: (values: FormData) => worldsApi.update(data!.id, { ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) }),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["world", slug] }); toast.success("World saved"); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });

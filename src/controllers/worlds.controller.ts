@@ -65,7 +65,7 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
   try {
     const { gallery, facts, credits, process, results, ...rest } = req.body;
 
-    const existing = await prisma.world.findUnique({ where: { slug: String(req.params.slug) } });
+    const existing = await prisma.world.findUnique({ where: { id: Number(req.params.id) } });
     if (!existing) {
       res.status(404).json({ success: false, data: null, message: "World not found" });
       return;
@@ -115,13 +115,13 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
 
 export async function deleteWorld(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const existing = await prisma.world.findUnique({ where: { slug: String(req.params.slug) } });
+    const existing = await prisma.world.findUnique({ where: { id: Number(req.params.id) } });
     if (!existing) {
       res.status(404).json({ success: false, data: null, message: "World not found" });
       return;
     }
 
-    await prisma.world.delete({ where: { slug: String(req.params.slug) } });
+    await prisma.world.delete({ where: { id: Number(req.params.id) } });
     res.json({ success: true, data: null, message: "World deleted" });
   } catch (err) {
     next(err);
