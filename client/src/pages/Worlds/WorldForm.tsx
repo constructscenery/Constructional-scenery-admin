@@ -49,10 +49,18 @@ export function WorldForm() {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["world", slug],
+    queryKey: ["world", slug], // Initial fetch by slug
     queryFn: () => worldsApi.getBySlug(slug!).then((r) => r.data.data),
     enabled: isEdit,
   });
+
+  // Set ID-based cache entry once data loads
+  useEffect(() => {
+    if (data?.id) {
+      const qcData = qc.getQueryData(["world", slug]);
+      qc.setQueryData(["world", data.id], qcData);
+    }
+  }, [data?.id, slug, qc]);
 
   const { register, handleSubmit, reset, control, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -87,7 +95,7 @@ export function WorldForm() {
 
   const updateMut = useMutation({
     mutationFn: (values: FormData) => worldsApi.update(data!.id, { ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["world", slug] }); toast.success("World saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["world", data!.id] }); toast.success("World saved"); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
