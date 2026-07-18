@@ -77,16 +77,17 @@ model Service {
 // ─── Projects (portfolio grid) ────────────────────────────────────────────────
 
 model Project {
-  id       Int      @id @default(autoincrement())
-  name     String
-  type     String   // "DC Feature Film", "Brand Activation", etc.
-  services String   // "Sculpting · Standby · Hero build"
-  year     String
-  slug     String?  @unique // set only for projects with a full case study
-  imageUrl String
-  span     String?  // "row-span-2" for tall grid tiles
-  order    Int      @default(0)
-  visible  Boolean  @default(true)
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String   // "DC Feature Film", "Brand Activation", etc.
+  services  String   // "Sculpting · Standby · Hero build"
+  year      String
+  slug      String?  @unique // set only for projects with a full case study
+  imageUrl  String
+  span      String?  // "row-span-2" for tall grid tiles
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  worldId   Int?     @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -170,26 +171,27 @@ model FooterSection {
 // ─── World / Case Study ───────────────────────────────────────────────────────
 
 model World {
-  id        Int            @id @default(autoincrement())
-  slug      String         @unique
-  title     String
-  summary   String
-  role      String
-  year      String
-  tags      String[]
-  category  String
-  heroImage String
-  vimeoId   String
-  intro     String
-  gallery   WorldImage[]
-  facts     WorldFact[]
-  credits   WorldCredit[]
-  process   WorldProcess[]
-  results   WorldResult[]
-  order     Int            @default(0)
-  visible   Boolean        @default(true)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  id         Int            @id @default(autoincrement())
+  slug       String         @unique
+  title      String
+  summary    String
+  role       String
+  year       String
+  tags       String[]
+  category   String
+  heroImage  String
+  vimeoId    String
+  intro      String
+  gallery    WorldImage[]
+  facts      WorldFact[]
+  credits    WorldCredit[]
+  process    WorldProcess[]
+  results    WorldResult[]
+  order      Int            @default(0)
+  visible    Boolean        @default(true)
+  projectId  Int?           @unique
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 }
 
 model WorldImage {

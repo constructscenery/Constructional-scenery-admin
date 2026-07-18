@@ -1,6 +1,30 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../lib/prisma";
 
+async function insertWorldAtOrder(order: number) {
+  await prisma.world.updateMany({
+    where: { order: { gte: order } },
+    data: { order: { increment: 1 } },
+  });
+}
+
+async function moveWorldToOrder(id: number, previousOrder: number, nextOrder: number) {
+  if (previousOrder === nextOrder) return;
+
+  if (nextOrder < previousOrder) {
+    await prisma.world.updateMany({
+      where: { id: { not: id }, order: { gte: nextOrder, lt: previousOrder } },
+      data: { order: { increment: 1 } },
+    });
+    return;
+  }
+
+  await prisma.world.updateMany({
+    where: { id: { not: id }, order: { gt: previousOrder, lte: nextOrder } },
+    data: { order: { decrement: 1 } },
+  });
+}
+
 const worldInclude = {
   gallery: { orderBy: { order: "asc" as const } },
   facts: { orderBy: { order: "asc" as const } },
@@ -45,10 +69,22 @@ export async function getWorldBySlug(req: Request, res: Response, next: NextFunc
 export async function createWorld(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const { gallery, facts, credits, process, results, ...rest } = req.body;
+    const payload = { ...rest };
+
+    if (payload.order !== undefined) {
+      await insertWorldAtOrder(Number(payload.order));
+    }
+
+    if (payload.projectId != null) {
+      const linkedProject = await prisma.project.findUnique({ where: { id: Number(payload.projectId) } });
+      if (linkedProject) {
+        await prisma.project.update({ where: { id: linkedProject.id }, data: { worldId: null } });
+      }
+    }
 
     const world = await prisma.world.create({
       data: {
-        ...rest,
+        ...payload,
         ...(gallery !== undefined ? { gallery: { create: gallery } } : {}),
         ...(facts !== undefined ? { facts: { create: facts } } : {}),
         ...(credits !== undefined ? { credits: { create: credits } } : {}),
@@ -57,6 +93,10 @@ export async function createWorld(req: Request, res: Response, next: NextFunctio
       },
       include: worldInclude,
     });
+
+    if (payload.projectId != null) {
+      await prisma.project.update({ where: { id: Number(payload.projectId) }, data: { worldId: world.id } });
+    }
 
     res.status(201).json({ success: true, data: world, message: "World created" });
   } catch (err) {
@@ -76,6 +116,22 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
 
     const previousSlug = existing.slug;
     const nextSlug = typeof rest.slug === "string" ? rest.slug : previousSlug;
+
+    if (rest.order !== undefined) {
+      await moveWorldToOrder(existing.id, existing.order, Number(rest.order));
+    }
+
+    if (rest.projectId !== undefined && rest.projectId !== existing.projectId) {
+      if (existing.projectId) {
+        await prisma.project.update({ where: { id: existing.projectId }, data: { worldId: null } });
+      }
+      if (rest.projectId != null) {
+        const linkedProject = await prisma.project.findUnique({ where: { id: Number(rest.projectId) } });
+        if (linkedProject) {
+          await prisma.project.update({ where: { id: linkedProject.id }, data: { worldId: existing.id } });
+        }
+      }
+    }
 
     // Delete and recreate relations when provided
     await prisma.$transaction(async (tx) => {
@@ -138,6 +194,10 @@ export async function deleteWorld(req: Request, res: Response, next: NextFunctio
     if (!existing) {
       res.status(404).json({ success: false, data: null, message: "World not found" });
       return;
+    }
+
+    if (existing.projectId) {
+      await prisma.project.update({ where: { id: existing.projectId }, data: { worldId: null } });
     }
 
     const linkedProject = await prisma.project.findFirst({ where: { slug: existing.slug } });

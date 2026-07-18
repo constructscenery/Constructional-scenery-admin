@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus, Trash2, ArrowLeft } from "lucide-react";
 import { worldsApi } from "@/api/worlds";
+import { projectsApi } from "@/api/projects";
 import { getErrorMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +35,7 @@ const schema = z.object({
   intro: z.string().min(1),
   order: z.coerce.number().int().default(0),
   visible: z.boolean().default(true),
+  projectId: z.coerce.number().int().nullable().optional(),
   gallery: z.array(z.object({ url: z.string(), order: z.coerce.number().int().default(0) })),
   facts: z.array(z.object({ label: z.string(), value: z.string(), order: z.coerce.number().int().default(0) })),
   credits: z.array(z.object({ role: z.string(), name: z.string(), order: z.coerce.number().int().default(0) })),
@@ -63,6 +66,7 @@ export function WorldForm() {
     resolver: zodResolver(schema),
     defaultValues: { gallery: [], facts: [], credits: [], visible: true, order: 0 },
   });
+  const { data: projects } = useQuery({ queryKey: ["projects"], queryFn: () => projectsApi.list().then((r) => r.data.data) });
 
   const gallery = useFieldArray({ control, name: "gallery" });
   const facts = useFieldArray({ control, name: "facts" });
@@ -125,6 +129,19 @@ export function WorldForm() {
                 <FormField label="Tags" error={errors.tags?.message} hint="Comma-separated"><Input {...register("tags")} placeholder="Feature Film, DC, Practical Build" /></FormField>
                 <FormField label="Vimeo ID" error={errors.vimeoId?.message}><Input {...register("vimeoId")} placeholder="76979871" /></FormField>
                 <FormField label="Display Order"><Input type="number" {...register("order")} /></FormField>
+                <FormField label="Connected Project" hint="Choose the project this case study should link to">
+                  <Select value={watch("projectId")?.toString() ?? ""} onValueChange={(value) => setValue("projectId", value === "" ? null : Number(value))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {projects?.map((project) => (
+                        <SelectItem key={project.id} value={project.id.toString()}>{project.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormField>
               </div>
               <FormField label="Summary" error={errors.summary?.message}>
                 <Input {...register("summary")} placeholder="Forging the textured underworld of a DC feature villain." />

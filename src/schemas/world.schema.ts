@@ -40,6 +40,7 @@ export const worldSchema = z.object({
   credits: z.array(worldCreditSchema).optional().default([]),
   order: z.number().int().default(0),
   visible: z.boolean().default(true),
+  projectId: z.number().int().nullable().optional(),
 });
 
 export const worldUpdateSchema = worldSchema.partial();

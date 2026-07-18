@@ -10,4 +10,5 @@ export const projectSchema = z.object({
   span: z.string().optional(),
   order: z.number().int().default(0),
   visible: z.boolean().default(true),
+  worldId: z.number().int().nullable().optional(),
 });

@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Pencil, Trash2, Plus, BookOpen } from "lucide-react";
 import { projectsApi } from "@/api/projects";
+import { worldsApi } from "@/api/worlds";
 import { Project } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +34,7 @@ const schema = z.object({
   span: z.string().optional(),
   order: z.coerce.number().int().default(0),
   visible: z.boolean().default(true),
+  worldId: z.coerce.number().int().nullable().optional(),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -40,6 +43,8 @@ function ProjectForm({ defaultValues, onSubmit, loading }: { defaultValues?: Par
     resolver: zodResolver(schema),
     defaultValues: { visible: true, order: 0, ...defaultValues },
   });
+  const { data: worlds } = useQuery({ queryKey: ["worlds"], queryFn: () => worldsApi.list().then((r) => r.data.data) });
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid gap-3 sm:grid-cols-2">
@@ -50,6 +55,19 @@ function ProjectForm({ defaultValues, onSubmit, loading }: { defaultValues?: Par
         <FormField label="Slug (for case study)" hint="Leave empty if no case study page"><Input {...register("slug")} placeholder="clayface" /></FormField>
         <FormField label="Grid Span" hint="row-span-2 for tall tile"><Input {...register("span")} placeholder="row-span-2" /></FormField>
         <FormField label="Display Order"><Input type="number" {...register("order")} /></FormField>
+        <FormField label="Connected World" hint="Choose the case study this project should link to">
+          <Select value={watch("worldId")?.toString() ?? ""} onValueChange={(value) => setValue("worldId", value === "" ? null : Number(value))}>
+            <SelectTrigger>
+              <SelectValue placeholder="None" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">None</SelectItem>
+              {worlds?.map((world) => (
+                <SelectItem key={world.id} value={world.id.toString()}>{world.title}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormField>
       </div>
       <ImageUpload label="Project Image" value={watch("imageUrl") ?? ""} onChange={(url) => setValue("imageUrl", url)} />
       <div className="flex items-center gap-2">
@@ -106,6 +124,7 @@ export function Projects() {
                 <TableCell>{p.slug ? <code className="text-xs bg-muted px-1 rounded">{p.slug}</code> : <span className="text-muted-foreground text-xs">—</span>}</TableCell>
                 <TableCell><Badge variant={p.visible ? "default" : "secondary"}>{p.visible ? "Visible" : "Hidden"}</Badge></TableCell>
                 <TableCell className="text-right">
+                  {p.worldId ? <span className="mr-2 text-xs text-muted-foreground">Linked</span> : null}
                   {p.slug && (
                     <Link to={`/worlds/${p.id}/edit`}>
                       <Button variant="ghost" size="icon" title="Edit case study">

@@ -94,6 +94,7 @@ export interface Project {
   span?: string;
   order: number;
   visible: boolean;
+  worldId?: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -219,6 +220,7 @@ export interface World {
   credits: WorldCredit[];
   order: number;
   visible: boolean;
+  projectId?: number | null;
   createdAt: string;
   updatedAt: string;
 }
