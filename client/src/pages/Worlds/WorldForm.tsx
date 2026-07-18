@@ -43,24 +43,24 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export function WorldForm() {
-  const { slug } = useParams<{ slug?: string }>();
-  const isEdit = !!slug;
+  const { id } = useParams<{ id?: string }>();
+  const isEdit = !!id;
   const navigate = useNavigate();
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["world", slug], // Initial fetch by slug
-    queryFn: () => worldsApi.getBySlug(slug!).then((r) => r.data.data),
+    queryKey: ["world", id],
+    queryFn: () => worldsApi.getById(Number(id!)).then((r) => r.data.data),
     enabled: isEdit,
   });
 
   // Set ID-based cache entry once data loads
   useEffect(() => {
     if (data?.id) {
-      const qcData = qc.getQueryData(["world", slug]);
+      const qcData = qc.getQueryData(["world", id]);
       qc.setQueryData(["world", data.id], qcData);
     }
-  }, [data?.id, slug, qc]);
+  }, [data?.id, id, qc]);
 
   const { register, handleSubmit, reset, control, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -89,7 +89,7 @@ export function WorldForm() {
 
   const createMut = useMutation({
     mutationFn: (values: FormData) => worldsApi.create({ ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) }),
-    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ["worlds"] }); toast.success("World created"); navigate(`/worlds/${res.data.data.slug}/edit`); },
+    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ["worlds"] }); toast.success("World created"); navigate(`/worlds/${res.data.data.id}/edit`); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 

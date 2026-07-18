@@ -72,7 +72,7 @@ export function Worlds() {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Link to={`/worlds/${w.slug}/edit`}>
+                  <Link to={`/worlds/${w.id}/edit`}>
                     <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
                   </Link>
                   <Button variant="ghost" size="icon" onClick={() => setDeleteId(w.id)}>

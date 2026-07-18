@@ -107,7 +107,7 @@ export function Projects() {
                 <TableCell><Badge variant={p.visible ? "default" : "secondary"}>{p.visible ? "Visible" : "Hidden"}</Badge></TableCell>
                 <TableCell className="text-right">
                   {p.slug && (
-                    <Link to={`/worlds/${p.slug}/edit`}>
+                    <Link to={`/worlds/${p.id}/edit`}>
                       <Button variant="ghost" size="icon" title="Edit case study">
                         <BookOpen className="h-4 w-4 text-primary" />
                       </Button>

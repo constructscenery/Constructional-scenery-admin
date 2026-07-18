@@ -23,8 +23,11 @@ export async function getWorlds(_req: Request, res: Response, next: NextFunction
 
 export async function getWorldBySlug(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const param = String(req.params.slug);
+    const isNumericId = /^\d+$/.test(param);
+
     const world = await prisma.world.findUnique({
-      where: { slug: String(req.params.slug) },
+      where: isNumericId ? { id: Number(param) } : { slug: param },
       include: worldInclude,
     });
 

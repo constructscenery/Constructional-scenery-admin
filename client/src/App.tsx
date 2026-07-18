@@ -43,7 +43,7 @@ export default function App() {
               <Route path="/footer" element={<Footer />} />
               <Route path="/worlds" element={<Worlds />} />
               <Route path="/worlds/new" element={<WorldForm />} />
-              <Route path="/worlds/:slug/edit" element={<WorldForm />} />
+              <Route path="/worlds/:id/edit" element={<WorldForm />} />
               <Route path="/media" element={<MediaLibrary />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>
