@@ -102,7 +102,7 @@ export function WorldForm() {
         <Button variant="ghost" size="sm" onClick={() => navigate("/worlds")} className="mb-2">
           <ArrowLeft className="mr-2 h-4 w-4" /> Back to Worlds
         </Button>
-        <PageHeader title={isEdit ? `Edit — ${data?.title ?? "…"}` : "New World"} description="Full case study with gallery, facts, credits, process steps, and results." />
+        <PageHeader title={isEdit ? `Edit — ${data?.title ?? "…"}` : "New World"} description="Full case study with gallery, facts, and credits." />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -213,57 +213,6 @@ export function WorldForm() {
             </CardContent></Card>
           </TabsContent>
 
-          {/* ── Process ───────────────────────────────────── */}
-          <TabsContent value="process">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label className="text-base font-medium">Process Narrative Steps</Label>
-                <Button type="button" variant="outline" size="sm" onClick={() => processSteps.append({ title: "", body: "", imageUrl: "", order: processSteps.fields.length })}>
-                  <Plus className="mr-1 h-3 w-3" />Add Step
-                </Button>
-              </div>
-              {processSteps.fields.map((f, i) => (
-                <Card key={f.id}>
-                  <CardContent className="space-y-3 pt-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-medium">Step {i + 1}</Label>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => processSteps.remove(i)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                    <FormField label="Title"><Input {...register(`process.${i}.title`)} placeholder="From maquette to monument" /></FormField>
-                    <FormField label="Body"><Textarea {...register(`process.${i}.body`)} rows={3} /></FormField>
-                    <ImageUpload label="Step Image" value={watch(`process.${i}.imageUrl`) ?? ""} onChange={(url) => setValue(`process.${i}.imageUrl`, url)} />
-                    <FormField label="Order"><Input type="number" {...register(`process.${i}.order`)} className="w-20" /></FormField>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          {/* ── Results ───────────────────────────────────── */}
-          <TabsContent value="results">
-            <Card><CardContent className="pt-6">
-              <div className="mb-4 flex items-center justify-between">
-                <Label className="text-base font-medium">Result Metrics</Label>
-                <Button type="button" variant="outline" size="sm" onClick={() => results.append({ value: "", label: "", order: results.fields.length })}>
-                  <Plus className="mr-1 h-3 w-3" />Add Result
-                </Button>
-              </div>
-              <div className="space-y-2">
-                {results.fields.map((f, i) => (
-                  <div key={f.id} className="flex gap-2">
-                    <Input {...register(`results.${i}.value`)} placeholder="26wk" className="w-28" />
-                    <Input {...register(`results.${i}.label`)} placeholder="Build" className="flex-1" />
-                    <Input type="number" {...register(`results.${i}.order`)} className="w-16" placeholder="Order" />
-                    <Button type="button" variant="ghost" size="icon" onClick={() => results.remove(i)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </CardContent></Card>
-          </TabsContent>
         </Tabs>
 
         <Separator className="my-6" />

@@ -89,7 +89,7 @@ export function Worlds() {
         open={deleteId !== null}
         onOpenChange={(o) => !o && setDeleteId(null)}
         title="Delete world?"
-        description={`This will permanently delete this world and all its gallery, facts, credits, process steps, and results.`}
+        description={`This will permanently delete this world and all its gallery, facts, and credits.`}
         onConfirm={() => deleteId && deleteMut.mutate(deleteId)}
         loading={deleteMut.isPending}
       />
