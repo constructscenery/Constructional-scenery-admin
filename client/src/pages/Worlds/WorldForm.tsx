@@ -45,6 +45,7 @@ type FormData = z.infer<typeof schema>;
 export function WorldForm() {
   const { id } = useParams<{ id?: string }>();
   const isEdit = !!id;
+  const worldId = Number(id);
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -91,7 +92,12 @@ export function WorldForm() {
   });
 
   const updateMut = useMutation({
-    mutationFn: (values: FormData) => worldsApi.update(data!.id, { ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) }),
+    mutationFn: (values: FormData) => {
+      if (!Number.isInteger(worldId) || worldId <= 0) {
+        throw new Error("This world has no valid ID. Return to Worlds and open it again.");
+      }
+      return worldsApi.update(worldId, { ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) });
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["projects"] }); qc.invalidateQueries({ queryKey: ["world", data!.id] }); toast.success("World saved"); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });

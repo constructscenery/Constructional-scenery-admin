@@ -26,7 +26,7 @@ async function moveProjectToOrder(id: number, previousOrder: number, nextOrder: 
 }
 
 async function ensureWorldExists(slug: string, project: {
-  name: string; services: string; year: string; type: string; imageUrl: string;
+  id: number; name: string; services: string; year: string; type: string; imageUrl: string;
 }) {
   if (!slug) return;
 
@@ -34,16 +34,19 @@ async function ensureWorldExists(slug: string, project: {
   const existingByTitle = await prisma.world.findMany({ where: { title: project.name } });
   const existing = existingBySlug ?? existingByTitle[0] ?? null;
 
+  let worldId: number;
+
   if (existing) {
     const duplicateWorlds = existingByTitle.filter((world) => world.id !== existing.id);
     for (const duplicate of duplicateWorlds) {
       await prisma.world.delete({ where: { id: duplicate.id } });
     }
 
-    await prisma.world.update({
+    const updated = await prisma.world.update({
       where: { id: existing.id },
       data: {
         slug,
+        projectId: project.id,
         title: project.name,
         summary: existing.summary ?? "",
         role: project.services,
@@ -56,23 +59,30 @@ async function ensureWorldExists(slug: string, project: {
         visible: existing.visible ?? false,
       },
     });
-    return;
+    worldId = updated.id;
+  } else {
+    const created = await prisma.world.create({
+      data: {
+        slug,
+        projectId: project.id,
+        title: project.name,
+        summary: "",
+        role: project.services,
+        year: project.year,
+        tags: [project.type],
+        category: project.type,
+        heroImage: project.imageUrl,
+        vimeoId: "",
+        intro: "",
+        visible: false,
+      },
+    });
+    worldId = created.id;
   }
 
-  await prisma.world.create({
-    data: {
-      slug,
-      title: project.name,
-      summary: "",
-      role: project.services,
-      year: project.year,
-      tags: [project.type],
-      category: project.type,
-      heroImage: project.imageUrl,
-      vimeoId: "",
-      intro: "",
-      visible: false,
-    },
+  await prisma.project.update({
+    where: { id: project.id },
+    data: { worldId },
   });
 }
 

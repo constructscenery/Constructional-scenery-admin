@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Film, Image, Users, Wrench, BookOpen,
-  GitBranch, MessageSquare, Leaf, Phone, AlignLeft, Globe, LogOut, GalleryHorizontal,
+  GitBranch, MessageSquare, Leaf, Phone, AlignLeft, LogOut, GalleryHorizontal,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,6 @@ const navItems = [
   { to: "/sustainability", label: "Sustainability", icon: Leaf },
   { to: "/contact", label: "Contact / CTA", icon: Phone },
   { to: "/footer", label: "Footer", icon: AlignLeft },
-  { to: "/worlds", label: "Worlds (Cases)", icon: Globe },
 ];
 
 export function Sidebar() {

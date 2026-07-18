@@ -30,8 +30,10 @@ model HeroSection {
   cta1Href      String
   cta2Label     String
   cta2Href      String
-  videoUrl      String?
-  videoPoster   String?
+  mediaType     String   @default("video") // "video" | "image"
+  videoUrl      String?  // used when mediaType = "video"
+  videoPoster   String?  // poster/still shown while video loads
+  heroImageUrl  String?  // used when mediaType = "image"
   trustStats    Json     // [{ value: "20+", label: "Years experience" }, ...]
   updatedAt     DateTime @updatedAt
 }

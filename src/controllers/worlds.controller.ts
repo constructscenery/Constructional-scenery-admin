@@ -165,7 +165,7 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
           ...(results !== undefined ? { results: { create: results } } : {}),
         },
       });
-    });
+    }, { timeout: 15000 });
 
     if (previousSlug !== nextSlug) {
       const linkedProject = await prisma.project.findFirst({

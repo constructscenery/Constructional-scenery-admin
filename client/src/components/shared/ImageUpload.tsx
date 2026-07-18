@@ -12,9 +12,10 @@ interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
   label?: string;
+  accept?: string;
 }
 
-export function ImageUpload({ value, onChange, label = "Image" }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, label = "Image", accept = "image/*,video/*" }: ImageUploadProps) {
   const [progress, setProgress] = useState<number | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +75,7 @@ export function ImageUpload({ value, onChange, label = "Image" }: ImageUploadPro
       <input
         ref={inputRef}
         type="file"
-        accept="image/*,video/*"
+        accept={accept}
         className="hidden"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
       />
@@ -95,14 +96,24 @@ export function ImageUpload({ value, onChange, label = "Image" }: ImageUploadPro
         </div>
       )}
 
-      {value && !isUploading && (
-        <img
-          src={value}
-          alt="Preview"
-          className="mt-2 h-32 w-full rounded-md border object-cover"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-        />
-      )}
+      {value && !isUploading && (() => {
+        const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(value);
+        return isVideo ? (
+          <video
+            key={value}
+            src={value}
+            controls
+            className="mt-2 h-32 w-full rounded-md border object-cover bg-black"
+          />
+        ) : (
+          <img
+            src={value}
+            alt="Preview"
+            className="mt-2 h-32 w-full rounded-md border object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+        );
+      })()}
       <MediaPicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}

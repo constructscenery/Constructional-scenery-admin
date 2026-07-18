@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, Eye, EyeOff } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Trash2, Plus, Eye, EyeOff } from "lucide-react";
 import { worldsApi } from "@/api/worlds";
 import { getErrorMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -23,12 +23,17 @@ export function Worlds() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["projects"] }); setDeleteId(null); toast.success("World deleted"); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
+  const reorderMut = useMutation({
+    mutationFn: ({ id, order }: { id: number; order: number }) => worldsApi.update(id, { order }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); toast.success("World order updated"); },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
 
   return (
     <div>
       <PageHeader
         title="Worlds / Case Studies"
-        description="Full case study pages accessible at /worlds/:slug on the portfolio."
+        description="Full case studies. Link a World to its portfolio Project once; the connection is shared both ways."
         action={<Link to="/worlds/new"><Button><Plus className="mr-2 h-4 w-4" />New World</Button></Link>}
       />
 
@@ -76,6 +81,16 @@ export function Worlds() {
                   <Link to={`/worlds/${w.id}/edit`}>
                     <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
                   </Link>
+                  <Button variant="ghost" size="icon" title="Move earlier" disabled={reorderMut.isPending || data?.[0]?.id === w.id} onClick={() => {
+                    const currentIndex = data?.findIndex((item) => item.id === w.id) ?? -1;
+                    const previous = currentIndex > 0 ? data?.[currentIndex - 1] : undefined;
+                    if (previous) reorderMut.mutate({ id: w.id, order: previous.order });
+                  }}><ArrowUp className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" title="Move later" disabled={reorderMut.isPending || data?.[data.length - 1]?.id === w.id} onClick={() => {
+                    const currentIndex = data?.findIndex((item) => item.id === w.id) ?? -1;
+                    const next = currentIndex >= 0 ? data?.[currentIndex + 1] : undefined;
+                    if (next) reorderMut.mutate({ id: w.id, order: next.order });
+                  }}><ArrowDown className="h-4 w-4" /></Button>
                   <Button variant="ghost" size="icon" onClick={() => setDeleteId(w.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>

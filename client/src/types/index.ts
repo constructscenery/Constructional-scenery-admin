@@ -27,8 +27,10 @@ export interface HeroSection {
   cta1Href: string;
   cta2Label: string;
   cta2Href: string;
+  mediaType: "video" | "image";
   videoUrl?: string;
   videoPoster?: string;
+  heroImageUrl?: string;
   trustStats: TrustStat[];
   updatedAt: string;
 }

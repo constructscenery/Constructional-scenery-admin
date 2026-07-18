@@ -14,7 +14,10 @@ export const heroSchema = z.object({
   cta1Href: z.string().min(1),
   cta2Label: z.string().min(1),
   cta2Href: z.string().min(1),
+  mediaType: z.enum(["video", "image"]).default("video"),
   videoUrl: z.string().optional(),
   videoPoster: z.string().optional(),
+  heroImageUrl: z.string().optional(),
   trustStats: z.array(trustStatSchema).min(1),
 });
+
