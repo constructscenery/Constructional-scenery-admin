@@ -105,8 +105,8 @@ export function Projects() {
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
-  const updateMut = useMutation({ mutationFn: ({ id, data }: { id: number; data: Partial<Project> }) => projectsApi.update(id, data), onSuccess: () => { inv(); setEditItem(null); toast.success("Project updated"); }, onError: (e) => toast.error(getErrorMessage(e)) });
-  const deleteMut = useMutation({ mutationFn: projectsApi.delete, onSuccess: () => { inv(); setDeleteId(null); toast.success("Project deleted"); }, onError: (e) => toast.error(getErrorMessage(e)) });
+  const updateMut = useMutation({ mutationFn: ({ id, data }: { id: number; data: Partial<Project> }) => projectsApi.update(id, data), onSuccess: () => { inv(); qc.invalidateQueries({ queryKey: ["worlds"] }); setEditItem(null); toast.success("Project updated"); }, onError: (e) => toast.error(getErrorMessage(e)) });
+  const deleteMut = useMutation({ mutationFn: projectsApi.delete, onSuccess: () => { inv(); qc.invalidateQueries({ queryKey: ["worlds"] }); setDeleteId(null); toast.success("Project deleted"); }, onError: (e) => toast.error(getErrorMessage(e)) });
 
   return (
     <div>
@@ -125,8 +125,8 @@ export function Projects() {
                 <TableCell><Badge variant={p.visible ? "default" : "secondary"}>{p.visible ? "Visible" : "Hidden"}</Badge></TableCell>
                 <TableCell className="text-right">
                   {p.worldId ? <span className="mr-2 text-xs text-muted-foreground">Linked</span> : null}
-                  {p.slug && (
-                    <Link to={`/worlds/${p.id}/edit`}>
+                  {p.worldId && (
+                    <Link to={`/worlds/${p.worldId}/edit`}>
                       <Button variant="ghost" size="icon" title="Edit case study">
                         <BookOpen className="h-4 w-4 text-primary" />
                       </Button>

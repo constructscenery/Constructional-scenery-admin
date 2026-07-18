@@ -86,13 +86,13 @@ export function WorldForm() {
 
   const createMut = useMutation({
     mutationFn: (values: FormData) => worldsApi.create({ ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) }),
-    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ["worlds"] }); toast.success("World created"); navigate(`/worlds/${res.data.data.id}/edit`); },
+    onSuccess: (res) => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["projects"] }); toast.success("World created"); navigate(`/worlds/${res.data.data.id}/edit`); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
   const updateMut = useMutation({
     mutationFn: (values: FormData) => worldsApi.update(data!.id, { ...values, tags: values.tags.split(",").map((t) => t.trim()).filter(Boolean) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["world", data!.id] }); toast.success("World saved"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["projects"] }); qc.invalidateQueries({ queryKey: ["world", data!.id] }); toast.success("World saved"); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 

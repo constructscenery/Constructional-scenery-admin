@@ -20,7 +20,7 @@ export function Worlds() {
 
   const deleteMut = useMutation({
     mutationFn: (id: number) => worldsApi.delete(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); setDeleteId(null); toast.success("World deleted"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["projects"] }); setDeleteId(null); toast.success("World deleted"); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
@@ -72,6 +72,7 @@ export function Worlds() {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
+                  {w.projectId ? <span className="mr-2 text-xs text-muted-foreground">Linked</span> : null}
                   <Link to={`/worlds/${w.id}/edit`}>
                     <Button variant="ghost" size="icon"><Pencil className="h-4 w-4" /></Button>
                   </Link>

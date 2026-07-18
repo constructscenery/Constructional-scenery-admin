@@ -131,6 +131,9 @@ export async function updateProject(req: Request, res: Response, next: NextFunct
       if (payload.worldId != null) {
         const linkedWorld = await prisma.world.findUnique({ where: { id: Number(payload.worldId) } });
         if (linkedWorld) {
+          if (linkedWorld.projectId && linkedWorld.projectId !== existing.id) {
+            await prisma.project.update({ where: { id: linkedWorld.projectId }, data: { worldId: null } });
+          }
           await prisma.world.update({ where: { id: linkedWorld.id }, data: { projectId: Number(req.params.id) } });
         }
       }
