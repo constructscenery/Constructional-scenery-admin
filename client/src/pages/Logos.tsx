@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus } from "lucide-react";
+import { Pencil, Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react";
 import { logosApi } from "@/api/logos";
 import { Logo } from "@/types";
 import { getErrorMessage } from "@/lib/utils";
@@ -40,8 +40,8 @@ function LogoForm({ defaultValues, onSubmit, loading }: { defaultValues?: Partia
         <Input {...register("name")} placeholder="BBC" />
       </FormField>
       <ImageUpload label="Logo Image (optional)" value={watch("imageUrl") ?? ""} onChange={(url) => setValue("imageUrl", url)} />
-      <FormField label="Display Order">
-        <Input type="number" {...register("order")} />
+      <FormField label="Display Order (Auto-managed)">
+        <Input type="number" {...register("order")} readOnly className="bg-muted text-muted-foreground cursor-not-allowed" />
       </FormField>
       <div className="flex items-center gap-2">
         <Switch checked={watch("visible")} onCheckedChange={(v) => setValue("visible", v)} id="visible" />
@@ -59,6 +59,7 @@ export function Logos() {
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<Logo | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [draggedId, setDraggedId] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery({ queryKey: ["logos"], queryFn: () => logosApi.list().then((r) => r.data.data) });
 
@@ -66,6 +67,7 @@ export function Logos() {
 
   const createMut = useMutation({ mutationFn: logosApi.create, onSuccess: () => { invalidate(); setAddOpen(false); toast.success("Logo added"); }, onError: (e) => toast.error(getErrorMessage(e)) });
   const updateMut = useMutation({ mutationFn: ({ id, data }: { id: number; data: Partial<Logo> }) => logosApi.update(id, data), onSuccess: () => { invalidate(); setEditItem(null); toast.success("Logo updated"); }, onError: (e) => toast.error(getErrorMessage(e)) });
+  const reorderMut = useMutation({ mutationFn: ({ id, data }: { id: number; data: Partial<Logo> }) => logosApi.update(id, data), onSuccess: () => { invalidate(); toast.success("Order updated"); }, onError: (e) => toast.error(getErrorMessage(e)) });
   const deleteMut = useMutation({ mutationFn: (id: number) => logosApi.delete(id), onSuccess: () => { invalidate(); setDeleteId(null); toast.success("Logo deleted"); }, onError: (e) => toast.error(getErrorMessage(e)) });
 
   return (
@@ -79,14 +81,40 @@ export function Logos() {
           <TableHeader><TableRow><TableHead>Name</TableHead><TableHead>Image</TableHead><TableHead>Order</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
           <TableBody>
             {data?.map((logo) => (
-              <TableRow key={logo.id}>
+              <TableRow 
+                key={logo.id}
+                draggable
+                onDragStart={() => setDraggedId(logo.id)}
+                onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (draggedId !== null && draggedId !== logo.id) {
+                    reorderMut.mutate({ id: draggedId, data: { order: logo.order } });
+                  }
+                  setDraggedId(null);
+                }}
+                onDragEnd={() => setDraggedId(null)}
+                className={draggedId === logo.id ? "opacity-30 bg-muted/50 cursor-grabbing" : "cursor-grab"}
+              >
                 <TableCell className="font-medium">{logo.name}</TableCell>
                 <TableCell>{logo.imageUrl ? <img src={logo.imageUrl} alt={logo.name} className="h-8 w-16 object-contain" /> : <span className="text-muted-foreground text-xs">Text only</span>}</TableCell>
                 <TableCell>{logo.order}</TableCell>
                 <TableCell><Badge variant={logo.visible ? "default" : "secondary"}>{logo.visible ? "Visible" : "Hidden"}</Badge></TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => setEditItem(logo)}><Pencil className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => setDeleteId(logo.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  <div className="flex items-center justify-end gap-0.5">
+                    <Button variant="ghost" size="icon" onClick={() => setEditItem(logo)}><Pencil className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" disabled={reorderMut.isPending || data?.[0]?.id === logo.id} onClick={() => {
+                      const idx = data?.findIndex((x) => x.id === logo.id) ?? -1;
+                      const prev = idx > 0 ? data?.[idx - 1] : undefined;
+                      if (prev) reorderMut.mutate({ id: logo.id, data: { order: prev.order } });
+                    }}><ArrowUp className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" disabled={reorderMut.isPending || data?.[data.length - 1]?.id === logo.id} onClick={() => {
+                      const idx = data?.findIndex((x) => x.id === logo.id) ?? -1;
+                      const next = idx >= 0 ? data?.[idx + 1] : undefined;
+                      if (next) reorderMut.mutate({ id: logo.id, data: { order: next.order } });
+                    }}><ArrowDown className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => setDeleteId(logo.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
