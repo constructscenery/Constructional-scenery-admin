@@ -49,11 +49,11 @@ export async function createWorld(req: Request, res: Response, next: NextFunctio
     const world = await prisma.world.create({
       data: {
         ...rest,
-        gallery: { create: gallery },
-        facts: { create: facts },
-        credits: { create: credits },
-        process: { create: process },
-        results: { create: results },
+        ...(gallery !== undefined ? { gallery: { create: gallery } } : {}),
+        ...(facts !== undefined ? { facts: { create: facts } } : {}),
+        ...(credits !== undefined ? { credits: { create: credits } } : {}),
+        ...(process !== undefined ? { process: { create: process } } : {}),
+        ...(results !== undefined ? { results: { create: results } } : {}),
       },
       include: worldInclude,
     });
@@ -73,6 +73,9 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
       res.status(404).json({ success: false, data: null, message: "World not found" });
       return;
     }
+
+    const previousSlug = existing.slug;
+    const nextSlug = typeof rest.slug === "string" ? rest.slug : previousSlug;
 
     // Delete and recreate relations when provided
     await prisma.$transaction(async (tx) => {
@@ -96,14 +99,27 @@ export async function updateWorld(req: Request, res: Response, next: NextFunctio
         where: { id: existing.id },
         data: {
           ...rest,
-          ...(gallery && { gallery: { create: gallery } }),
-          ...(facts && { facts: { create: facts } }),
-          ...(credits && { credits: { create: credits } }),
-          ...(process && { process: { create: process } }),
-          ...(results && { results: { create: results } }),
+          ...(gallery !== undefined ? { gallery: { create: gallery } } : {}),
+          ...(facts !== undefined ? { facts: { create: facts } } : {}),
+          ...(credits !== undefined ? { credits: { create: credits } } : {}),
+          ...(process !== undefined ? { process: { create: process } } : {}),
+          ...(results !== undefined ? { results: { create: results } } : {}),
         },
       });
     });
+
+    if (previousSlug !== nextSlug) {
+      const linkedProject = await prisma.project.findFirst({
+        where: { OR: [{ slug: previousSlug }, { slug: nextSlug }] },
+      });
+
+      if (linkedProject) {
+        await prisma.project.update({
+          where: { id: linkedProject.id },
+          data: { slug: nextSlug },
+        });
+      }
+    }
 
     const updated = await prisma.world.findUnique({
       where: { id: existing.id },
@@ -122,6 +138,14 @@ export async function deleteWorld(req: Request, res: Response, next: NextFunctio
     if (!existing) {
       res.status(404).json({ success: false, data: null, message: "World not found" });
       return;
+    }
+
+    const linkedProject = await prisma.project.findFirst({ where: { slug: existing.slug } });
+    if (linkedProject) {
+      await prisma.project.update({
+        where: { id: linkedProject.id },
+        data: { slug: null },
+      });
     }
 
     await prisma.world.delete({ where: { id: Number(req.params.id) } });

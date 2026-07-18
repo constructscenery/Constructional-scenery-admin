@@ -25,7 +25,6 @@ const schema = z.object({
   slug: z.string().min(1),
   title: z.string().min(1),
   summary: z.string().min(1),
-  role: z.string().min(1),
   year: z.string().min(1),
   tags: z.string().min(1),
   category: z.string().min(1),
@@ -37,8 +36,6 @@ const schema = z.object({
   gallery: z.array(z.object({ url: z.string(), order: z.coerce.number().int().default(0) })),
   facts: z.array(z.object({ label: z.string(), value: z.string(), order: z.coerce.number().int().default(0) })),
   credits: z.array(z.object({ role: z.string(), name: z.string(), order: z.coerce.number().int().default(0) })),
-  process: z.array(z.object({ title: z.string(), body: z.string(), imageUrl: z.string(), order: z.coerce.number().int().default(0) })),
-  results: z.array(z.object({ value: z.string(), label: z.string(), order: z.coerce.number().int().default(0) })),
 });
 type FormData = z.infer<typeof schema>;
 
@@ -64,14 +61,12 @@ export function WorldForm() {
 
   const { register, handleSubmit, reset, control, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { gallery: [], facts: [], credits: [], process: [], results: [], visible: true, order: 0 },
+    defaultValues: { gallery: [], facts: [], credits: [], visible: true, order: 0 },
   });
 
   const gallery = useFieldArray({ control, name: "gallery" });
   const facts = useFieldArray({ control, name: "facts" });
   const credits = useFieldArray({ control, name: "credits" });
-  const processSteps = useFieldArray({ control, name: "process" });
-  const results = useFieldArray({ control, name: "results" });
 
   useEffect(() => {
     if (data) {
@@ -81,8 +76,6 @@ export function WorldForm() {
         gallery: data.gallery.map((g) => ({ url: g.url, order: g.order })),
         facts: data.facts.map((f) => ({ label: f.label, value: f.value, order: f.order })),
         credits: data.credits.map((c) => ({ role: c.role, name: c.name, order: c.order })),
-        process: data.process.map((p) => ({ title: p.title, body: p.body, imageUrl: p.imageUrl, order: p.order })),
-        results: data.results.map((r) => ({ value: r.value, label: r.label, order: r.order })),
       });
     }
   }, [data, reset]);
@@ -119,8 +112,6 @@ export function WorldForm() {
             <TabsTrigger value="gallery">Gallery</TabsTrigger>
             <TabsTrigger value="facts">Facts</TabsTrigger>
             <TabsTrigger value="credits">Credits</TabsTrigger>
-            <TabsTrigger value="process">Process</TabsTrigger>
-            <TabsTrigger value="results">Results</TabsTrigger>
           </TabsList>
 
           {/* ── Basic Info ─────────────────────────────────── */}
@@ -131,7 +122,6 @@ export function WorldForm() {
                 <FormField label="Slug" error={errors.slug?.message} hint="URL-safe, e.g. clayface"><Input {...register("slug")} placeholder="clayface" /></FormField>
                 <FormField label="Category" error={errors.category?.message}><Input {...register("category")} placeholder="Feature Film" /></FormField>
                 <FormField label="Year" error={errors.year?.message}><Input {...register("year")} placeholder="2025" /></FormField>
-                <FormField label="Role" error={errors.role?.message}><Input {...register("role")} placeholder="Scenic Construction · Sculpting" /></FormField>
                 <FormField label="Tags" error={errors.tags?.message} hint="Comma-separated"><Input {...register("tags")} placeholder="Feature Film, DC, Practical Build" /></FormField>
                 <FormField label="Vimeo ID" error={errors.vimeoId?.message}><Input {...register("vimeoId")} placeholder="76979871" /></FormField>
                 <FormField label="Display Order"><Input type="number" {...register("order")} /></FormField>

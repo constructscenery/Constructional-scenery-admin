@@ -203,29 +203,11 @@ export interface WorldCredit {
   worldId: number;
 }
 
-export interface WorldProcess {
-  id: number;
-  title: string;
-  body: string;
-  imageUrl: string;
-  order: number;
-  worldId: number;
-}
-
-export interface WorldResult {
-  id: number;
-  value: string;
-  label: string;
-  order: number;
-  worldId: number;
-}
-
 export interface World {
   id: number;
   slug: string;
   title: string;
   summary: string;
-  role: string;
   year: string;
   tags: string[];
   category: string;
@@ -235,8 +217,6 @@ export interface World {
   gallery: WorldImage[];
   facts: WorldFact[];
   credits: WorldCredit[];
-  process: WorldProcess[];
-  results: WorldResult[];
   order: number;
   visible: boolean;
   createdAt: string;
@@ -245,12 +225,10 @@ export interface World {
 
 // ── World write payload (sub-arrays omit DB-generated id/worldId) ────────────
 
-export type WorldInput = Omit<Partial<World>, "gallery" | "facts" | "credits" | "process" | "results"> & {
+export type WorldInput = Omit<Partial<World>, "gallery" | "facts" | "credits"> & {
   gallery?: Omit<WorldImage, "id" | "worldId">[];
   facts?: Omit<WorldFact, "id" | "worldId">[];
   credits?: Omit<WorldCredit, "id" | "worldId">[];
-  process?: Omit<WorldProcess, "id" | "worldId">[];
-  results?: Omit<WorldResult, "id" | "worldId">[];
 };
 
 // ── Upload ──────────────────────────────────────────────────────────────────

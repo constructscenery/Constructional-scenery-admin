@@ -4,24 +4,52 @@ import { prisma } from "../lib/prisma";
 async function ensureWorldExists(slug: string, project: {
   name: string; services: string; year: string; type: string; imageUrl: string;
 }) {
-  const existing = await prisma.world.findUnique({ where: { slug } });
-  if (!existing) {
-    await prisma.world.create({
+  if (!slug) return;
+
+  const existingBySlug = await prisma.world.findUnique({ where: { slug } });
+  const existingByTitle = await prisma.world.findMany({ where: { title: project.name } });
+  const existing = existingBySlug ?? existingByTitle[0] ?? null;
+
+  if (existing) {
+    const duplicateWorlds = existingByTitle.filter((world) => world.id !== existing.id);
+    for (const duplicate of duplicateWorlds) {
+      await prisma.world.delete({ where: { id: duplicate.id } });
+    }
+
+    await prisma.world.update({
+      where: { id: existing.id },
       data: {
         slug,
         title: project.name,
-        summary: "",
+        summary: existing.summary ?? "",
         role: project.services,
         year: project.year,
         tags: [project.type],
         category: project.type,
         heroImage: project.imageUrl,
-        vimeoId: "",
-        intro: "",
-        visible: false,
+        vimeoId: existing.vimeoId ?? "",
+        intro: existing.intro ?? "",
+        visible: existing.visible ?? false,
       },
     });
+    return;
   }
+
+  await prisma.world.create({
+    data: {
+      slug,
+      title: project.name,
+      summary: "",
+      role: project.services,
+      year: project.year,
+      tags: [project.type],
+      category: project.type,
+      heroImage: project.imageUrl,
+      vimeoId: "",
+      intro: "",
+      visible: false,
+    },
+  });
 }
 
 export async function getProjects(_req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -66,6 +94,19 @@ export async function updateProject(req: Request, res: Response, next: NextFunct
 
 export async function deleteProject(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    const project = await prisma.project.findUnique({ where: { id: Number(req.params.id) } });
+    if (!project) {
+      res.status(404).json({ success: false, data: null, message: "Project not found" });
+      return;
+    }
+
+    if (project.slug) {
+      const linkedWorld = await prisma.world.findUnique({ where: { slug: project.slug } });
+      if (linkedWorld) {
+        await prisma.world.delete({ where: { id: linkedWorld.id } });
+      }
+    }
+
     await prisma.project.delete({ where: { id: Number(req.params.id) } });
     res.json({ success: true, data: null, message: "Project deleted" });
   } catch (err) {
