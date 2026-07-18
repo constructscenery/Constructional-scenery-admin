@@ -90,13 +90,6 @@ export function Hero() {
 
   const handleSwitchMode = (mode: "video" | "image") => {
     setValue("mediaType", mode, { shouldDirty: true });
-    // Clear stale fields from the mode we're leaving so they don't persist to the DB
-    if (mode === "image") {
-      setValue("videoUrl", "", { shouldDirty: true });
-      setValue("videoPoster", "", { shouldDirty: true });
-    } else {
-      setValue("heroImageUrl", "", { shouldDirty: true });
-    }
   };
 
   if (isLoading)

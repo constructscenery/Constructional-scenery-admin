@@ -118,10 +118,12 @@ function CaseStudyBadge({ project }: { project: Project }) {
   }
   if (project.worldId) {
     return (
-      <Badge variant="default" className="gap-1 text-xs">
-        <Eye className="h-3 w-3" />
-        Live draft
-      </Badge>
+      <Link to={`/projects/${project.id}/case-study`}>
+        <Badge variant="default" className="gap-1 text-xs hover:bg-primary/80 cursor-pointer transition-colors">
+          <Eye className="h-3 w-3" />
+          Live draft
+        </Badge>
+      </Link>
     );
   }
   return (
