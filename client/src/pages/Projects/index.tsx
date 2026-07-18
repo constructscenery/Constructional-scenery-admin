@@ -230,7 +230,6 @@ export function Projects() {
                 <TableHead>Type</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead>Slug</TableHead>
-                <TableHead>Case Study</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -271,9 +270,6 @@ export function Projects() {
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <CaseStudyBadge project={p} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={p.visible ? "default" : "secondary"}>
