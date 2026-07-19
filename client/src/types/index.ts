@@ -165,9 +165,14 @@ export interface ContactSection {
 
 // ── Footer ──────────────────────────────────────────────────────────────────
 
+export interface FooterColumnLink {
+  label: string;
+  url: string;
+}
+
 export interface FooterColumn {
   title: string;
-  links: string[];
+  links: FooterColumnLink[];
 }
 
 export interface FooterSection {
