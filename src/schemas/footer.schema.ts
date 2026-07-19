@@ -2,7 +2,10 @@ import { z } from "zod";
 
 const columnSchema = z.object({
   title: z.string(),
-  links: z.array(z.string()),
+  links: z.array(z.object({
+    label: z.string(),
+    url: z.string()
+  })),
 });
 
 export const footerSchema = z.object({
