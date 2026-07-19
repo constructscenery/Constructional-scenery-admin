@@ -1,13 +1,14 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Trash2, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Upload } from "lucide-react";
 import { worldsApi } from "@/api/worlds";
 import { projectsApi } from "@/api/projects";
+import { uploadApi } from "@/api/upload";
 import { getErrorMessage } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,8 @@ export function WorldForm() {
   const worldId = Number(id);
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ["world", id],
@@ -90,6 +93,43 @@ export function WorldForm() {
     onSuccess: (res) => { qc.invalidateQueries({ queryKey: ["worlds"] }); qc.invalidateQueries({ queryKey: ["projects"] }); toast.success("World created"); navigate(`/worlds/${res.data.data.id}/edit`); },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
+
+  const handleBulkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setIsBulkUploading(true);
+    toast.info(`Uploading ${files.length} images...`);
+    const promises = Array.from(files).map(async (file) => {
+      try {
+        const res = await uploadApi.uploadImage(file);
+        return { success: true, url: res.data.data.url, name: file.name };
+      } catch (err) {
+        return { success: false, url: "", name: file.name };
+      }
+    });
+
+    const results = await Promise.all(promises);
+    
+    const successfulUploads = results.filter(res => res.success);
+    const failedUploads = results.filter(res => !res.success);
+
+    if (successfulUploads.length > 0) {
+      const startIndex = gallery.fields.length;
+      const newItems = successfulUploads.map((res, idx) => ({
+        url: res.url,
+        order: startIndex + idx,
+      }));
+      gallery.append(newItems);
+      toast.success(`Successfully uploaded ${successfulUploads.length} images`);
+    }
+
+    failedUploads.forEach(res => {
+      toast.error(`Failed to upload ${res.name}`);
+    });
+    setIsBulkUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const updateMut = useMutation({
     mutationFn: (values: FormData) => {
@@ -168,9 +208,28 @@ export function WorldForm() {
             <Card><CardContent className="pt-6">
               <div className="mb-4 flex items-center justify-between">
                 <Label className="text-base font-medium">Gallery Images</Label>
-                <Button type="button" variant="outline" size="sm" onClick={() => gallery.append({ url: "", order: gallery.fields.length })}>
-                  <Plus className="mr-1 h-3 w-3" />Add Image
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isBulkUploading}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="mr-1 h-3 w-3" /> {isBulkUploading ? "Uploading..." : "Bulk Upload"}
+                  </Button>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,video/*"
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleBulkUpload}
+                  />
+                  <Button type="button" variant="outline" size="sm" onClick={() => gallery.append({ url: "", order: gallery.fields.length })}>
+                    <Plus className="mr-1 h-3 w-3" />Add Image
+                  </Button>
+                </div>
               </div>
               <div className="space-y-3">
                 {gallery.fields.map((f, i) => (
