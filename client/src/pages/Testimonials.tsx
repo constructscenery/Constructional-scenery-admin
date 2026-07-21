@@ -26,7 +26,7 @@ const schema = z.object({
   text: z.string().min(1),
   name: z.string().min(1),
   role: z.string().min(1),
-  imageUrl: z.string().min(1),
+  imageUrl: z.string().optional().nullable().or(z.literal("")),
   order: z.coerce.number().int().default(0),
   visible: z.boolean().default(true),
 });
@@ -47,7 +47,7 @@ function TestimonialForm({ defaultValues, onSubmit, loading }: { defaultValues?:
           <Input type="number" {...register("order")} readOnly className="bg-muted text-muted-foreground cursor-not-allowed" />
         </FormField>
       </div>
-      <ImageUpload label="Avatar Image" value={watch("imageUrl") ?? ""} onChange={(url) => setValue("imageUrl", url)} />
+      <ImageUpload label="Avatar Image (Optional)" value={watch("imageUrl") ?? ""} onChange={(url) => setValue("imageUrl", url)} />
       <div className="flex items-center gap-2">
         <Switch checked={watch("visible")} onCheckedChange={(v) => setValue("visible", v)} id="t-visible" />
         <Label htmlFor="t-visible">Visible</Label>
@@ -95,7 +95,13 @@ export function Testimonials() {
                 onDragEnd={() => setDraggedId(null)}
                 className={draggedId === t.id ? "opacity-30 bg-muted/50 cursor-grabbing" : "cursor-grab"}
               >
-                <TableCell><img src={t.imageUrl} alt={t.name} className="h-9 w-9 rounded-full object-cover" /></TableCell>
+                <TableCell>
+                  {t.imageUrl ? (
+                    <img src={t.imageUrl} alt={t.name} className="h-9 w-9 rounded-full object-cover" />
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
                 <TableCell className="font-medium whitespace-nowrap">{t.name}</TableCell>
                 <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{t.role}</TableCell>
                 <TableCell className="max-w-xs truncate text-sm text-muted-foreground">"{t.text}"</TableCell>

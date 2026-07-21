@@ -37,6 +37,9 @@ export async function getTestimonials(_req: Request, res: Response, next: NextFu
 export async function createTestimonial(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const payload = req.body;
+    if (payload.imageUrl === "" || !payload.imageUrl) {
+      payload.imageUrl = null;
+    }
     if (payload.order !== undefined) {
       await insertTestimonialAtOrder(Number(payload.order));
     }
@@ -51,6 +54,9 @@ export async function updateTestimonial(req: Request, res: Response, next: NextF
   try {
     const id = Number(req.params.id);
     const payload = req.body;
+    if (payload.imageUrl === "" || payload.imageUrl === undefined) {
+      payload.imageUrl = null;
+    }
 
     if (payload.order !== undefined) {
       const existing = await prisma.testimonial.findUnique({ where: { id } });

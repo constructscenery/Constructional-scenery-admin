@@ -120,7 +120,7 @@ export interface Testimonial {
   text: string;
   name: string;
   role: string;
-  imageUrl: string;
+  imageUrl?: string | null;
   order: number;
   visible: boolean;
   createdAt: string;
