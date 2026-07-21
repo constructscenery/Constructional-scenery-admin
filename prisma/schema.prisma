@@ -170,6 +170,18 @@ model FooterSection {
   updatedAt DateTime @updatedAt
 }
 
+// ─── Bio Section (singleton) ──────────────────────────────────────────────────
+
+model BioSection {
+  id          Int      @id @default(autoincrement())
+  name        String
+  role        String
+  description String
+  imageUrl    String?
+  links       Json     // [{ label: "Instagram", url: "..." }, ...]
+  updatedAt   DateTime @updatedAt
+}
+
 // ─── World / Case Study ───────────────────────────────────────────────────────
 
 model World {

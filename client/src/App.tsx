@@ -18,6 +18,7 @@ import { Testimonials } from "@/pages/Testimonials";
 import { Sustainability } from "@/pages/Sustainability";
 import { Contact } from "@/pages/Contact";
 import { Footer } from "@/pages/Footer";
+import { Bio } from "@/pages/Bio";
 import { MediaLibrary } from "@/pages/MediaLibrary";
 
 export default function App() {
@@ -52,6 +53,7 @@ export default function App() {
               <Route path="/sustainability" element={<Sustainability />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/footer" element={<Footer />} />
+              <Route path="/bio" element={<Bio />} />
               <Route path="/media" element={<MediaLibrary />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Route>

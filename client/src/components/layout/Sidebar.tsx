@@ -20,6 +20,7 @@ const navItems = [
   { to: "/sustainability", label: "Sustainability", icon: Leaf },
   { to: "/contact", label: "Contact / CTA", icon: Phone },
   { to: "/footer", label: "Footer", icon: AlignLeft },
+  { to: "/bio", label: "Bio Page", icon: Users },
 ];
 
 export function Sidebar() {

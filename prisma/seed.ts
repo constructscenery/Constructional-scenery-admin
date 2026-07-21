@@ -176,6 +176,22 @@ async function main() {
   });
   console.log("✓ Contact section");
 
+  // ── Bio Section ───────────────────────────────────────────────────────────────
+  await prisma.bioSection.deleteMany();
+  await prisma.bioSection.create({
+    data: {
+      name: "Construct Scenery",
+      role: "Premium Scenic Construction",
+      description: "UK-based scenic construction for film, television, brands, and experiential events. We build worlds.",
+      imageUrl: "/assets/about-craft.jpg",
+      links: [
+        { label: "Website", url: "https://constructscenery.co.uk" },
+        { label: "Instagram", url: "https://instagram.com/constructscenery" }
+      ],
+    },
+  });
+  console.log("✓ Bio section");
+
   // ── Footer ────────────────────────────────────────────────────────────────────
   await prisma.footerSection.deleteMany();
   await prisma.footerSection.create({
