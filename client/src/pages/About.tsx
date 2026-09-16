@@ -58,7 +58,11 @@ export function About() {
             <FormField label="Headline" error={errors.headline?.message}>
               <Input {...register("headline")} placeholder="From concept to camera ready." />
             </FormField>
-            <FormField label="Body Text" error={errors.bodyText?.message}>
+            <FormField
+              label="Body Text"
+              error={errors.bodyText?.message}
+              hint="Press Enter where you want a line break on the website."
+            >
               <Textarea {...register("bodyText")} rows={4} />
             </FormField>
             <ImageUpload label="Section Image" value={watch("imageUrl") ?? ""} onChange={(url) => setValue("imageUrl", url)} />
